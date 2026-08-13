@@ -25,6 +25,17 @@ PORT=5000
 CLIENT_URL="http://localhost:5173"
 ```
 
-## Health
+## Vercel deploy
 
-`GET /api/health`
+Set these Environment Variables in the Vercel project:
+
+| Key | Value |
+|-----|-------|
+| `DATABASE_URL` | Supabase URL with `?sslmode=require` (see `.env.example`) |
+| `JWT_SECRET` | a long random secret |
+| `CLIENT_URL` | `https://refurbicon-bhilwara.vercel.app` |
+
+Root/entry for Vercel is configured via `vercel.json` → `api/index.js`.
+
+After env vars are set, redeploy. Check `https://refurbicon-backend.vercel.app/api/health`.
+
