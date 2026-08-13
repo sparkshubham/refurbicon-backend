@@ -11,3 +11,6 @@ coverage/
 .vscode/
 *.sqlite
 tmp-*.js
+
+.vercel
+.env*
