@@ -26,6 +26,8 @@ import roleRoutes from './routes/roles.js';
 import settingRoutes from './routes/settings.js';
 import salesRoutes from './routes/sales.js';
 import storeRoutes from './routes/store.js';
+import invoiceRoutes from './routes/invoices.js';
+import billRoutes from './routes/bills.js';
 
 dotenv.config();
 
@@ -109,6 +111,8 @@ app.use('/api/roles', roleRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/store', storeRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/bills', billRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
