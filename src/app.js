@@ -63,7 +63,30 @@ app.get('/', (_req, res) => {
   res.json({ ok: true, service: 'REFURBICON API', health: '/api/health' });
 });
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'REFURBICON API' }));
+app.get('/api/health', async (_req, res) => {
+  const started = Date.now();
+  try {
+    const { default: prisma } = await import('./lib/prisma.js');
+    await prisma.$queryRaw`SELECT 1`;
+    return res.json({
+      ok: true,
+      service: 'REFURBICON API',
+      db: 'up',
+      latencyMs: Date.now() - started,
+      region: process.env.VERCEL_REGION || 'local',
+    });
+  } catch (e) {
+    return res.status(503).json({
+      ok: false,
+      service: 'REFURBICON API',
+      db: 'down',
+      latencyMs: Date.now() - started,
+      message: e.message,
+      region: process.env.VERCEL_REGION || 'local',
+    });
+  }
+});
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
