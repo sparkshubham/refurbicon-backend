@@ -5,13 +5,14 @@ import { authRequired } from '../middleware/auth.js';
 
 const router = Router();
 
-function calcPayroll(emp, leaveDays = 0) {
+function calcPayroll(emp, leaveDays = 0, bonus = 0) {
   const basic = money(emp.basicSalary);
   const hra = money(emp.hra);
   const conveyance = money(emp.conveyance);
   const otherAllow = money(emp.otherAllow);
   const overtime = 0;
-  const gross = basic + hra + conveyance + otherAllow + overtime;
+  const bonusAmt = money(bonus);
+  const gross = basic + hra + conveyance + otherAllow + overtime + bonusAmt;
   const pf = Number(((basic * money(emp.pfPercent || 12)) / 100).toFixed(2));
   const professionalTax = basic > 15000 ? 200 : 0;
   const esi = basic <= 21000 ? Number(((gross * 0.75) / 100).toFixed(2)) : 0;
@@ -26,6 +27,7 @@ function calcPayroll(emp, leaveDays = 0) {
     conveyance,
     overtime,
     otherAllow,
+    bonus: bonusAmt,
     pf,
     professionalTax,
     esi,
@@ -96,7 +98,10 @@ router.post('/generate', authRequired, async (req, res) => {
           status: { in: ['ABSENT', 'ON_LEAVE'] },
         },
       });
-      const calc = calcPayroll(emp, leaveDays);
+      const approvedBonus = await prisma.staffBonus.findFirst({
+        where: { employeeId: emp.id, month, year, status: { in: ['APPROVED', 'PAID'] } },
+      });
+      const calc = calcPayroll(emp, leaveDays, approvedBonus ? money(approvedBonus.bonusAmount) : 0);
       const row = await prisma.payroll.upsert({
         where: { employeeId_month_year: { employeeId: emp.id, month, year } },
         update: { ...calc, status: 'PROCESSED' },

@@ -28,6 +28,8 @@ import salesRoutes from './routes/sales.js';
 import storeRoutes from './routes/store.js';
 import invoiceRoutes from './routes/invoices.js';
 import billRoutes from './routes/bills.js';
+import ticketRoutes from './routes/tickets.js';
+import staffRoutes from './routes/staff.js';
 
 dotenv.config();
 
@@ -113,6 +115,8 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/bills', billRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/staff', staffRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

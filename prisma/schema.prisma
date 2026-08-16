@@ -39,6 +39,10 @@ model User {
   productHistory   ProductHistory[]
   invoicesCreated  Invoice[]         @relation("InvoiceCreator")
   billsCreated     Bill[]            @relation("BillCreator")
+  ticketsCreated   Ticket[]          @relation("TicketCreator")
+  ticketsAssigned  Ticket[]          @relation("TicketAssignee")
+  ticketComments   TicketComment[]
+  bonusesReviewed  StaffBonus[]      @relation("BonusReviewer")
 }
 
 model Setting {
@@ -62,6 +66,7 @@ model Customer {
   orders    Order[]
   payments  Payment[]
   invoices  Invoice[]
+  tickets   Ticket[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -202,12 +207,14 @@ model Order {
   statusLogs      OrderStatusLog[]
   warranties      Warranty[]
   invoices        Invoice[]
+  tickets         Ticket[]
   orderDate       DateTime         @default(now())
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
   @@index([status])
   @@index([paymentStatus])
+  @@index([assignedStaffId])
 }
 
 enum OrderStatus {
@@ -431,6 +438,7 @@ model Employee {
   leaves       LeaveRequest[]
   payrolls     Payroll[]
   performances Performance[]
+  bonuses      StaffBonus[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 }
@@ -501,6 +509,7 @@ model Payroll {
   conveyance    Decimal       @db.Decimal(12, 2) @default(0)
   overtime      Decimal       @db.Decimal(12, 2) @default(0)
   otherAllow    Decimal       @db.Decimal(12, 2) @default(0)
+  bonus         Decimal       @db.Decimal(12, 2) @default(0)
   pf            Decimal       @db.Decimal(12, 2) @default(0)
   professionalTax Decimal     @db.Decimal(12, 2) @default(0)
   esi           Decimal       @db.Decimal(12, 2) @default(0)
@@ -534,4 +543,64 @@ model Performance {
   reviewedBy String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+// Monthly sales review + bonus for staff (linked via Employee.userId → Order.assignedStaffId)
+model StaffBonus {
+  id            String   @id @default(cuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month         Int
+  year          Int
+  salesCount    Int      @default(0)
+  salesAmount   Decimal  @db.Decimal(12, 2) @default(0)
+  rating        Decimal  @db.Decimal(3, 1) @default(0)
+  bonusPercent  Decimal  @db.Decimal(5, 2) @default(0)
+  bonusAmount   Decimal  @db.Decimal(12, 2) @default(0)
+  reviewNotes   String?
+  status        String   @default("DRAFT") // DRAFT | APPROVED | PAID | REJECTED
+  reviewedById  String?
+  reviewedBy    User?    @relation("BonusReviewer", fields: [reviewedById], references: [id])
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([employeeId, month, year])
+  @@index([month, year])
+}
+
+model Ticket {
+  id           String          @id @default(cuid())
+  ticketNo     String          @unique
+  subject      String
+  description  String?
+  category     String          @default("GENERAL") // GENERAL | ORDER | PRODUCT | WARRANTY | BILLING | OTHER
+  priority     String          @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  status       String          @default("OPEN") // OPEN | IN_PROGRESS | WAITING | RESOLVED | CLOSED
+  customerId   String?
+  customer     Customer?       @relation(fields: [customerId], references: [id])
+  orderId      String?
+  order        Order?          @relation(fields: [orderId], references: [id])
+  createdById  String?
+  createdBy    User?           @relation("TicketCreator", fields: [createdById], references: [id])
+  assignedToId String?
+  assignedTo   User?           @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  comments     TicketComment[]
+  resolvedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([priority])
+}
+
+model TicketComment {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
 }

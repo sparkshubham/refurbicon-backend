@@ -38,14 +38,14 @@ async function main() {
     data: {
       name: 'Manager',
       description: 'Business + HR operations',
-      permissions: ['products.*', 'orders.*', 'hr.*', 'reports.view'],
+      permissions: ['products.*', 'orders.*', 'hr.*', 'reports.view', 'tickets.*', 'staff.review'],
     },
   });
   const staffRole = await prisma.role.create({
     data: {
       name: 'Staff',
       description: 'Operational staff',
-      permissions: ['orders.view', 'products.view', 'attendance.own'],
+      permissions: ['orders.view', 'products.view', 'attendance.own', 'tickets.own', 'staff.panel', 'leaves.own'],
     },
   });
 
